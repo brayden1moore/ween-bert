@@ -63,6 +63,7 @@ def guess(prompt,maskVal):
 thisPrompt = ''
 thisGuess = ''
 thisMask = ''
+thisAnswer = ''
 thisUser = ''
 
 nextPrompt = ''
