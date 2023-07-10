@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 THIS_FOLDER = Path(__file__).parent.resolve()
 
-modelPath = os.path.abspath(f'{THIS_FOLDER}/weenbert-2')
+modelPath = os.path.abspath(f'{THIS_FOLDER}/weenbert')
 lyricsPath = os.path.abspath(f'{THIS_FOLDER}/weenLyrics.txt')
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertForMaskedLM.from_pretrained(modelPath)
