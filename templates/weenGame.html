@@ -25,6 +25,7 @@
       AI Guess: <b>{{ guessVal }}</b><br></p>
 
     <b style="color: {% if userScore>bertScore %}green{% elif bertScore>userScore %}red{% endif %};">It's {{ userScore }} to {{ bertScore }}!</b>
+    <br><form action="/game" method="post"><input type="submit" id="reset-button" value="Reset"></form>
   </div>
   <script>
     inputText.addEventListener('keyup', function(event) {
@@ -77,7 +78,22 @@
 
   img {
     width: 30%;
+    align-items: center;
     height: auto;
   }
+
+  #reset-button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: yellow;
+      color: #23120B;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    
+    #reset-button:hover {
+      background-color: pink;
+    }
 </style>
 </html>
