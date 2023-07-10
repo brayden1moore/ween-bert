@@ -7,21 +7,27 @@
   <div class="content">
     <img src="https://static.tumblr.com/9256f85faee910f9e4543a1a98f382d2/v3pague/xVvo54xqe/tumblr_static_bcid4v4oxjc40800gkwss84cc.png" alt="Boognish">
     <h1>Are You Browner Than an AI?</h1>
-    <p>{{ prompt | safe }}</p>
-    <br>
-    <form action="/result" method="post">
-      <input id="user" name="user" type="text" placeholder="Type your guess..." autofocus>
-    </form>
-    <br>
+    <p>{{ prompt | safe }}</p><p style="color: white">_________________________________
+
+    <br>Correct Answer: <b style="color: {% if maskVal|lower|replace('/[^a-zA-Z0-9]+/g', '') == user|lower|replace('/[^a-zA-Z0-9]+/g', '') %}green{% elif maskVal|lower|replace('/[^a-zA-Z0-9]+/g', '') != user|lower|replace('/[^a-zA-Z0-9]+/g', '') %}red{% endif %};">{{ maskVal }}</b>
+    <br>Your Guess: <b>{{ user }}</b>
+    AI Guess: <b>{{ guessVal }}</b><br></p>
     <b style="color: {% if userScore>bertScore %}green{% elif bertScore>userScore %}red{% endif %};">It's {{ userScore }} to {{ bertScore }}!</b>
+    <br><br>
+    <form action="/play"><input type="submit" id="next-button" value="Next"></form>
     <form action="/"><input type="submit" id="reset-button" value="Reset"></form>
-  </div>
-  <script>
-    inputText.addEventListener('keyup', function(event) {
-      if (event.keyCode === 13) { // Enter key code
-        event.preventDefault();
-        document.getElementById('user').submit();
-      }
+  
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var inputText = document.getElementById('next-button');
+
+      document.addEventListener('keydown', function(event) {
+        if (event.keyCode === 13) { // Enter key code
+          event.preventDefault();
+          inputText.click();
+        }
+      });
     });
   </script>
 </body>
@@ -58,7 +64,7 @@
     padding-left: 20px;
     padding-right: 20px;
     white-space: pre-line;
-    color: yellow;
+    color: rgb(255, 159, 247);
   }
 
   h4 {
@@ -84,5 +90,20 @@
     #reset-button:hover {
         color: rgb(255, 159, 247);
     }
+
+    #next-button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: yellow;
+      color: #23120B;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    
+    #next-button:hover {
+      background-color: pink;
+    }
+
 </style>
 </html>

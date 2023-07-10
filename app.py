@@ -54,10 +54,9 @@ thisGuess = ''
 thisMask = ''
 thisUser = ''
 
-prevPrompt = ''
-prevGuess = ''
-prevMask = ''
-prevUser = ''
+nextPrompt = ''
+nextGuess = ''
+nextMask = ''
 
 userScore = 0
 bertScore = 0
@@ -67,18 +66,11 @@ templateDir = os.path.abspath(f'{THIS_FOLDER}/templates')
 app.template_folder = templateDir
 
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def home():
-    global thisPrompt, thisGuess, thisMask, thisUser, prevPrompt, prevGuess, prevMask, prevUser, userScore, bertScore
-    thisPrompt = ''
-    thisGuess = ''
-    thisMask = ''
-    thisUser = ''
-
-    prevPrompt = ''
-    prevGuess = ''
-    prevMask = ''
-    prevUser = ''
+    global nextPrompt, nextGuess, nextMask, userScore, bertScore
+    
+    nextPrompt, nextGuess, nextMask = generate(tokenizer,model) 
 
     userScore = 0
     bertScore = 0
@@ -86,32 +78,30 @@ def home():
     return render_template('weenLand.html')
 
 
-@app.route('/game', methods=['POST'])
-def game(): 
-    global thisPrompt, thisGuess, thisMask, thisUser, prevPrompt, prevGuess, prevMask, prevUser, userScore, bertScore
+@app.route('/play', methods=['POST','GET'])
+def play(): 
+    global nextPrompt, nextGuess, nextMask, thisPrompt, thisGuess, thisMask, thisUser, userScore, bertScore
 
-    thisPrompt, thisGuess, thisMask = generate(tokenizer,model)
-    
-    return render_template('weenGame.html', prompt=thisPrompt, guessVal=prevGuess, maskVal=prevMask, user=prevUser, userScore=userScore, bertScore=bertScore)
+    thisPrompt = nextPrompt
+    thisGuess = nextGuess
+    thisMask = nextMask
+
+    nextPrompt, nextGuess, nextMask = generate(tokenizer,model) 
+
+    return render_template('weenGame.html', prompt=thisPrompt, userScore=userScore, bertScore=bertScore)
 
 
-@app.route('/play', methods=['POST'])
-def play():
-    global prevPrompt, prevGuess, prevMask, prevUser, thisPrompt, thisGuess, thisMask, thisUser, userScore, bertScore
-    
-    prevPrompt = thisPrompt.replace('[HIDDEN]',thisMask.upper())
-    prevGuess = thisGuess
-    prevMask = thisMask
-    prevUser = thisUser
-
+@app.route('/result', methods=['POST'])
+def result():
+    global thisPrompt, thisGuess, thisMask, thisUser, userScore, bertScore
     thisUser = request.form['user']
 
-    thisPrompt, thisGuess, thisMask = generate(tokenizer,model) 
+    thisResult = thisPrompt.replace('[HIDDEN]',thisMask.upper())
 
-    userScore += (thisUser.lower().strip() == prevMask.lower().strip())
-    bertScore += (prevGuess.lower().strip() == prevMask.lower().strip())
+    userScore += (thisUser.lower().strip() == thisMask.lower().strip())
+    bertScore += (thisGuess.lower().strip() == thisMask.lower().strip())
 
-    return render_template('weenGame.html', prompt=thisPrompt,guessVal=prevGuess,maskVal=prevMask,user=thisUser,userScore=userScore,bertScore=bertScore,prevPrompt=prevPrompt)
+    return render_template('weenResult.html', prompt=thisResult, guessVal=thisGuess, maskVal=thisMask, user=thisUser, userScore=userScore, bertScore=bertScore)
 
 
 if __name__ == '__main__':
