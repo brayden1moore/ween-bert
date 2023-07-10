@@ -29,20 +29,6 @@ def recall():
 
 usedIndices = []
 
-thisPrompt = ''
-thisGuess = ''
-thisMask = ''
-thisAnswer = ''
-thisUser = ''
-
-nextPrompt = ''
-nextGuess = ''
-nextMask = ''
-nextAnswer = ''
-
-userScore = 0
-bertScore = 0
-
 app = Flask(__name__)
 templateDir = os.path.abspath(f'{THIS_FOLDER}/templates')
 app.template_folder = templateDir
@@ -50,51 +36,73 @@ app.template_folder = templateDir
 
 @app.route('/', methods=['GET'])
 def home():
-    global thisPrompt, thisGuess, thisMask, thisAnswer, thisUser, nextPrompt, nextGuess, nextMask, nextAnswer, userScore, bertScore
     
-    thisPrompt = ''
-    thisGuess = ''
-    thisMask = ''
-    thisAnswer = ''
-    thisUser = ''
+    currentGeneration = {'prompt':'',
+                         'mask':'',
+                         'guess':'',
+                         'answer':'',
+                         'userScore':0,
+                         'bertScore':0}
 
-    nextPrompt = ''
-    nextGuess = ''
-    nextMask = ''
-    nextAnswer = ''
-
-    userScore = 0
-    bertScore = 0
-
-    nextPrompt, nextMask, nextGuess, nextAnswer = recall()
+    with open('currentGeneration.json','w') as f:
+        json.dump(currentGeneration, f)
     
     return render_template('weenLand.html')
 
 
 @app.route('/play', methods=['POST','GET'])
 def play(): 
-    global nextPrompt, nextGuess, nextMask, nextAnswer, thisPrompt, thisGuess, thisMask, thisAnswer, thisUser, userScore, bertScore
 
-    thisPrompt = nextPrompt
-    thisGuess = nextGuess
-    thisMask = nextMask
-    thisAnswer = nextAnswer
+    with open(f'{THIS_FOLDER}/currentGeneration.json','r') as f:
+        lastGeneration = dict(json.load(f))
 
-    nextPrompt, nextMask, nextGuess, nextAnswer = recall()
+    userScore = lastGeneration['userScore']
+    bertScore = lastGeneration['bertScore']
+
+    prompt, mask, guess, answer = recall()
+
+    currentGeneration = {'prompt':prompt,
+                         'mask':mask,
+                         'guess':guess,
+                         'answer':answer,
+                         'userScore':userScore,
+                         'bertScore':bertScore}
+
+    with open(f'{THIS_FOLDER}/currentGeneration.json','w') as f:
+        json.dump(currentGeneration, f)
     
-    return render_template('weenGame.html', prompt=thisPrompt, userScore=userScore, bertScore=bertScore)
+    return render_template('weenGame.html', prompt=prompt, userScore=userScore, bertScore=bertScore)
 
 
 @app.route('/result', methods=['POST'])
 def result():
-    global thisPrompt, thisGuess, thisMask, thisAnswer, thisUser, userScore, bertScore
+
+    with open(f'{THIS_FOLDER}/currentGeneration.json','r') as f:
+        currentGeneration = dict(json.load(f))
+
+    prompt = currentGeneration['prompt']
+    mask = currentGeneration['mask']
+    guess = currentGeneration['guess']
+    answer = currentGeneration['answer']
+    userScore = currentGeneration['userScore']
+    bertScore = currentGeneration['bertScore']
+
+    user = request.form['user']
+
+    userScore += (user.lower().strip() == mask.lower().strip())
+    bertScore += (guess.lower().strip() == mask.lower().strip())
+
+    currentGeneration = {'prompt':prompt,
+                         'mask':mask,
+                         'guess':guess,
+                         'answer':answer,
+                         'userScore':userScore,
+                         'bertScore':bertScore}
     
-    thisUser = request.form['user']
-
-    userScore += (thisUser.lower().strip() == thisMask.lower().strip())
-    bertScore += (thisGuess.lower().strip() == thisMask.lower().strip())
-
-    return render_template('weenResult.html', prompt=thisAnswer, guessVal=thisGuess, maskVal=thisMask, user=thisUser, userScore=userScore, bertScore=bertScore)
+    with open(f'{THIS_FOLDER}/currentGeneration.json','w') as f:
+        json.dump(currentGeneration, f)
+        
+    return render_template('weenResult.html', prompt=answer, guessVal=guess, maskVal=mask, user=user, userScore=userScore, bertScore=bertScore)
 
 
 if __name__ == '__main__':
