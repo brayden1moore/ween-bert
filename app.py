@@ -13,7 +13,7 @@ modelPath = os.path.abspath(f'{THIS_FOLDER}/weenbert')
 lyricsPath = os.path.abspath(f'{THIS_FOLDER}/weenLyrics.txt')
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertForMaskedLM.from_pretrained(modelPath)
-device = (torch.device('cuda') if torch.has_cuda else torch.device('cpu'))
+device = (torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
 
 with open(lyricsPath,'r') as f:
     text = f.read().split('[split]')
