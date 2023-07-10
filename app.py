@@ -81,8 +81,22 @@ app.template_folder = templateDir
 
 @app.route('/', methods=['GET'])
 def home():
-    global nextPrompt, nextGuess, nextMask, nextAnswer, userScore, bertScore
+    global thisPrompt, thisGuess, thisMask, thisAnswer, thisUser, nextPrompt, nextGuess, nextMask, nextAnswer, userScore, bertScore
     
+    thisPrompt = ''
+    thisGuess = ''
+    thisMask = ''
+    thisAnswer = ''
+    thisUser = ''
+
+    nextPrompt = ''
+    nextGuess = ''
+    nextMask = ''
+    nextAnswer = ''
+
+    userScore = 0
+    bertScore = 0
+
     nextPrompt, nextMask = generate() 
     nextGuess, nextAnswer = guess(nextPrompt,nextMask)
 
