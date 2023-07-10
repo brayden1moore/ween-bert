@@ -74,8 +74,9 @@ def home():
 
     userScore = 0
     bertScore = 0
-
-    return render_template('weenLand.html')
+    
+    if nextPrompt!='':
+        return render_template('weenLand.html')
 
 
 @app.route('/play', methods=['POST','GET'])
@@ -87,8 +88,9 @@ def play():
     thisMask = nextMask
 
     nextPrompt, nextGuess, nextMask = generate(tokenizer,model) 
-
-    return render_template('weenGame.html', prompt=thisPrompt, userScore=userScore, bertScore=bertScore)
+    
+    if nextPrompt!=thisPrompt:
+        return render_template('weenGame.html', prompt=thisPrompt, userScore=userScore, bertScore=bertScore)
 
 
 @app.route('/result', methods=['POST'])
