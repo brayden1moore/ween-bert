@@ -1,64 +1,33 @@
-from transformers import BertTokenizer, BertForMaskedLM
-import torch
-import random
-torch.set_num_threads(1)
-
 from flask import Flask, render_template, request
 import os
-
+import random
+import json
 from pathlib import Path
 THIS_FOLDER = Path(__file__).parent.resolve()
 
-modelPath = os.path.abspath(f'{THIS_FOLDER}/weenbert')
-lyricsPath = os.path.abspath(f'{THIS_FOLDER}/weenLyrics.txt')
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-model = BertForMaskedLM.from_pretrained(modelPath)
-#device = (torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
-device = torch.device('cpu')
+jsonPath = os.path.abspath(f'{THIS_FOLDER}/generationDict.json')
 
-with open(lyricsPath,'r') as f:
-    text = f.read().split('[split]')
+with open(jsonPath,'r') as f:
+    generationDict = dict(json.load(f))
 
 
-def generate():
-    lyrIdx = round(random.random() * len(text)-1)
-    verse = text[lyrIdx]
-    splitText = verse.replace('\n',' \n ').replace(',',' , ').replace('.',' . ').replace('"',' " ').replace('(',' ( ').replace(')',' ) ').split(' ')[:30]
-    maskVal = '.'
+def recall():
+    global usedIndices
+    lyrIdx = str(round(random.random() * len(generationDict)-1))
 
-    while maskVal == ',' or maskVal == '.' or maskVal == '\n' or maskVal == '' or len(maskVal)<4 or len(splitText)<2 or 'We do not have the lyrics' in verse:
-        lyrIdx = round(random.random() * len(text)-1)
-        verse = text[lyrIdx]
-        splitText = verse.replace('\n',' \n ').replace(',',' , ').replace('.',' . ').replace(' " ','"').replace(' ( ','(').replace(' ) ',')').split(' ')[:30]
-        maskIdx = round(random.random() * len(splitText)-1)
-        maskVal = splitText[maskIdx].replace('"','').replace('.','').replace(',','')
+    while lyrIdx in usedIndices:
+        lyrIdx = str(round(random.random() * len(generationDict)-1))
 
-    splitText[maskIdx] = '[MASK]'
-    prompt = ' '.join(splitText).replace(' \n ','\n').replace(' , ',',').replace(' . ','.')
-    return prompt, maskVal
+    maskVal = generationDict[lyrIdx]['maskVal']
+    prompt = generationDict[lyrIdx]['prompt'].replace(f' {maskVal}',' [HIDDEN] ').replace('MASK','HIDDEN')
+    guessVal = generationDict[lyrIdx]['guessVal']
+    unmaskedPrompt = generationDict[lyrIdx]['unmaskedPrompt']
+    usedIndices.append(lyrIdx)
 
- 
-def guess(prompt,maskVal):
-    encodings = tokenizer(prompt, max_length=64, truncation=True, padding='max_length', return_tensors='pt')
-    inputIds = encodings['input_ids'].to(device)
+    return prompt, maskVal, guessVal, unmaskedPrompt
 
-    try:
-        maskIdx = (inputIds == 103).flatten().nonzero().item()
-        attentionMask = encodings['attention_mask'].to(device)
 
-        # Finetuned
-        model.to(device)
-        outputs = model(input_ids=inputIds, attention_mask=attentionMask)
-        logits = outputs.logits
-        soft = logits.softmax(dim=-1)
-        arg = soft.argmax(dim=-1).view(-1)
-        guessVal = tokenizer.convert_ids_to_tokens(arg[maskIdx].item())
-    except:
-        guessVal = 'I dunno man...'
-
-    unmaskedPrompt = prompt.replace('[MASK]',maskVal.upper()).replace(maskVal,maskVal.upper())
-    return guessVal, unmaskedPrompt
-
+usedIndices = []
 
 thisPrompt = ''
 thisGuess = ''
@@ -97,11 +66,7 @@ def home():
     userScore = 0
     bertScore = 0
 
-    nextPrompt, nextMask = generate() 
-    nextGuess, nextAnswer = guess(nextPrompt,nextMask)
-
-    userScore = 0
-    bertScore = 0
+    nextPrompt, nextMask, nextGuess, nextAnswer = recall()
     
     return render_template('weenLand.html')
 
@@ -115,10 +80,9 @@ def play():
     thisMask = nextMask
     thisAnswer = nextAnswer
 
-    nextPrompt, nextMask = generate() 
-    nextGuess, nextAnswer = guess(nextPrompt,nextMask)
+    nextPrompt, nextMask, nextGuess, nextAnswer = recall()
     
-    return render_template('weenGame.html', prompt=thisPrompt.replace('MASK','HIDDEN').replace(f'{thisMask}','[HIDDEN]'), userScore=userScore, bertScore=bertScore)
+    return render_template('weenGame.html', prompt=thisPrompt, userScore=userScore, bertScore=bertScore)
 
 
 @app.route('/result', methods=['POST'])
