@@ -1,6 +1,7 @@
 from transformers import BertTokenizer, BertForMaskedLM
 import torch
 import random
+#torch.set_num_threads(1)
 
 from flask import Flask, render_template, request
 import os
