@@ -13,7 +13,7 @@
       <input id="user" name="user" type="text" placeholder="Type your guess..." autofocus>
     </form>
     <br>
-    <b style="color: {% if userScore>bertScore %}green{% elif bertScore>userScore %}red{% endif %};">It's {{ userScore }} to {{ bertScore }}!</b>
+    <b style="color: {% if userScore>bertScore %}green{% elif bertScore>userScore %}red{% endif %};">You're {{scoreState}} {{ userScore }} to {{ bertScore }}!</b> 
     <form action="/"><input type="submit" id="reset-button" value="Reset"></form>
   </div>
   <script>

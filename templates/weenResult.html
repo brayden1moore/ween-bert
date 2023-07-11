@@ -12,8 +12,9 @@
     <br>Correct Answer: <b style="color: {% if maskVal|lower|replace('/[^a-zA-Z0-9]+/g', '') == user|lower|replace('/[^a-zA-Z0-9]+/g', '') %}green{% elif maskVal|lower|replace('/[^a-zA-Z0-9]+/g', '') != user|lower|replace('/[^a-zA-Z0-9]+/g', '') %}red{% endif %};">{{ maskVal }}</b>
     <br>Your Guess: <b>{{ user }}</b>
     AI Guess: <b>{{ guessVal }}</b><br></p>
-    <b style="color: {% if userScore>bertScore %}green{% elif bertScore>userScore %}red{% endif %};">It's {{ userScore }} to {{ bertScore }}!</b>
-    <br><br>
+    <b style="color: {% if userScore>bertScore %}green{% elif bertScore>userScore %}red{% endif %};">You're {{scoreState}} {{ userScore }} to {{ bertScore }}!</b>
+    <p style="color: white">Humans <b>{{humanScore}}</b>, AI <b>{{aiScore}}</b></p>
+    <br>
     <form action="/play"><input type="submit" id="next-button" value="Next"></form>
     <form action="/"><input type="submit" id="reset-button" value="Reset"></form>
   

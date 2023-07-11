@@ -47,7 +47,13 @@ def home():
     with open(f'{THIS_FOLDER}/cache/currentGeneration{session["sessionId"]}.json','w') as f:
         json.dump(currentGeneration, f)
     
-    return render_template('weenLand.html')
+    with open(f'{THIS_FOLDER}/totalScores.json','r') as f:
+        totalScores = dict(json.load(f))
+
+    aiScore = totalScores['aiScore']
+    humanScore = totalScores['humanScore']
+    
+    return render_template('weenLand.html', humanScore=humanScore, aiScore=aiScore)
 
 
 @app.route('/play', methods=['POST','GET'])
@@ -58,6 +64,7 @@ def play():
 
     userScore = lastGeneration['userScore']
     bertScore = lastGeneration['bertScore']
+    scoreState = ('tied' if userScore==bertScore else 'winning' if userScore>bertScore else 'losing')
 
     prompt, mask, guess, answer = recall()
 
@@ -71,7 +78,13 @@ def play():
     with open(f'{THIS_FOLDER}/cache/currentGeneration{session["sessionId"]}.json','w') as f:
         json.dump(currentGeneration, f)
     
-    return render_template('weenGame.html', prompt=prompt, userScore=userScore, bertScore=bertScore)
+    with open(f'{THIS_FOLDER}/totalScores.json','r') as f:
+        totalScores = dict(json.load(f))
+
+    aiScore = totalScores['aiScore']
+    humanScore = totalScores['humanScore']
+    
+    return render_template('weenGame.html', prompt=prompt, userScore=userScore, bertScore=bertScore, humanScore=humanScore, scoreState=scoreState, aiScore=aiScore)
 
 
 @app.route('/result', methods=['POST'])
@@ -79,18 +92,31 @@ def result():
 
     with open(f'{THIS_FOLDER}/cache/currentGeneration{session["sessionId"]}.json','r') as f:
         currentGeneration = dict(json.load(f))
+    
+    with open(f'{THIS_FOLDER}/totalScores.json','r') as f:
+        totalScores = dict(json.load(f))
+
+    aiScore = totalScores['aiScore']
+    humanScore = totalScores['humanScore']
 
     prompt = currentGeneration['prompt']
-    mask = currentGeneration['mask']
+    mask = currentGeneration['mask'].replace('(','').replace(')','').replace("'","").replace('?','').replace(',','').replace('!','')
     guess = currentGeneration['guess']
     answer = currentGeneration['answer']
     userScore = currentGeneration['userScore']
     bertScore = currentGeneration['bertScore']
 
-    user = request.form['user']
+    user = request.form['user'].replace('(','').replace(')','').replace("'","").replace('?','').replace(',','').replace('!','')
 
-    userScore += (user.lower().strip() == mask.lower().strip())
-    bertScore += (guess.lower().strip() == mask.lower().strip())
+    userCorrect = (user.lower().strip() in mask.lower().strip())
+    bertCorrect = (guess.lower().strip() in mask.lower().strip())
+
+    userScore += userCorrect
+    bertScore += bertCorrect
+    scoreState = ('tied' if userScore==bertScore else 'winning' if userScore>bertScore else 'losing')
+
+    humanScore += userCorrect
+    aiScore += bertCorrect
 
     currentGeneration = {'prompt':prompt,
                          'mask':mask,
@@ -101,8 +127,14 @@ def result():
     
     with open(f'{THIS_FOLDER}/cache/currentGeneration{session["sessionId"]}.json','w') as f:
         json.dump(currentGeneration, f)
+
+    totalScores = {'aiScore':aiScore,
+                   'humanScore':humanScore}
+
+    with open(f'{THIS_FOLDER}/totalScores.json','w') as f:
+        json.dump(totalScores, f)
         
-    return render_template('weenResult.html', prompt=answer, guessVal=guess, maskVal=mask, user=user, userScore=userScore, bertScore=bertScore)
+    return render_template('weenResult.html', prompt=answer, guessVal=guess, maskVal=mask, user=user, userScore=userScore, bertScore=bertScore, scoreState=scoreState, humanScore=humanScore, aiScore=aiScore)
 
 
 if __name__ == '__main__':
