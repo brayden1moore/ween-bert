@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session
 import os
 import random
 import json
@@ -29,13 +29,14 @@ def recall():
 usedIndices = []
 
 app = Flask(__name__)
+app.secret_key = 'pi-33pp-co-sk-32'
 templateDir = os.path.abspath(f'{THIS_FOLDER}/templates')
 app.template_folder = templateDir
 
 
 @app.route('/', methods=['GET'])
 def home():
-    sessionId = random.random()*100
+    session['sessionId'] = random.random()*100
     currentGeneration = {'prompt':'',
                          'mask':'',
                          'guess':'',
@@ -43,7 +44,7 @@ def home():
                          'userScore':0,
                          'bertScore':0}
 
-    with open(f'{THIS_FOLDER}/cache/currentGeneration{sessionId}.json','w') as f:
+    with open(f'{THIS_FOLDER}/cache/currentGeneration{session["sessionId"]}.json','w') as f:
         json.dump(currentGeneration, f)
     
     return render_template('weenLand.html')
@@ -52,7 +53,7 @@ def home():
 @app.route('/play', methods=['POST','GET'])
 def play(): 
 
-    with open(f'{THIS_FOLDER}/cache/currentGeneration{sessionId}.json','r') as f:
+    with open(f'{THIS_FOLDER}/cache/currentGeneration{session["sessionId"]}.json','r') as f:
         lastGeneration = dict(json.load(f))
 
     userScore = lastGeneration['userScore']
@@ -67,7 +68,7 @@ def play():
                          'userScore':userScore,
                          'bertScore':bertScore}
 
-    with open(f'{THIS_FOLDER}/cache/currentGeneration{sessionId}.json','w') as f:
+    with open(f'{THIS_FOLDER}/cache/currentGeneration{session["sessionId"]}.json','w') as f:
         json.dump(currentGeneration, f)
     
     return render_template('weenGame.html', prompt=prompt, userScore=userScore, bertScore=bertScore)
@@ -76,7 +77,7 @@ def play():
 @app.route('/result', methods=['POST'])
 def result():
 
-    with open(f'{THIS_FOLDER}/cache/currentGeneration{sessionId}.json','r') as f:
+    with open(f'{THIS_FOLDER}/cache/currentGeneration{session["sessionId"]}.json','r') as f:
         currentGeneration = dict(json.load(f))
 
     prompt = currentGeneration['prompt']
@@ -98,7 +99,7 @@ def result():
                          'userScore':userScore,
                          'bertScore':bertScore}
     
-    with open(f'{THIS_FOLDER}/cache/currentGeneration{sessionId}.json','w') as f:
+    with open(f'{THIS_FOLDER}/cache/currentGeneration{session["sessionId"]}.json','w') as f:
         json.dump(currentGeneration, f)
         
     return render_template('weenResult.html', prompt=answer, guessVal=guess, maskVal=mask, user=user, userScore=userScore, bertScore=bertScore)
