@@ -10,8 +10,6 @@ jsonPath = os.path.abspath(f'{THIS_FOLDER}/generationDict.json')
 with open(jsonPath,'r') as f:
     generationDict = dict(json.load(f))
 
-sessionId = random.random()*100
-
 def recall():
     global usedIndices
     lyrIdx = str(round(random.random() * len(generationDict)-1))
@@ -37,7 +35,7 @@ app.template_folder = templateDir
 
 @app.route('/', methods=['GET'])
 def home():
-    
+    sessionId = random.random()*100
     currentGeneration = {'prompt':'',
                          'mask':'',
                          'guess':'',
